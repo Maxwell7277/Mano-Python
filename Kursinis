@@ -1,0 +1,472 @@
+import os
+import shutil
+import time
+import math
+
+class empty:
+    pass
+
+
+def singleton(cls):
+    instances = {}
+
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return get_instance
+
+
+def print_dir_full(var, akt, vart, id, space = 2, lines = []):                                 #specialiai spauzdinti pilnai isplestai direktorijai
+    f_list = os.listdir(var)
+    a = 0
+    for item in f_list:
+        a += 1                                    #tikrina, ar tika teises pasitinkarti objekta
+        if a < len(f_list):
+            if int(space/2) not in lines:
+                lines.append(int(space/2))
+        else:
+            if int(space/2) in lines:
+                lines.remove(int(space/2))
+        for sp in range(0, int((space-2)/2)):
+            if sp+1 in lines:
+                print("│ ", end = "")
+            else:
+                print("  ", end = "")
+        if a < len(f_list):
+            print("├─", end = "")
+        else:
+            print("└─", end = "")
+        print(item)
+        if os.path.isdir(os.path.join(var, item)) and True == access(var, item, id, akt, vart):
+            print_dir_full(os.path.join(var, item), akt, vart, id, space + 2, lines)
+
+
+def print_1(*args):
+    obj_type_list = [
+        ]
+    for var in args:
+        if var[0] == "/":
+            print("WRONG PRINT COMMAND ISSUED")
+
+        if var == "- " or var == ": ":
+            print(var, end = "")
+
+        elif type(var) is list:
+            for var1 in var:
+                print_1("- ", var1)
+
+        elif type(var) is str or type(var) is int:
+            print(var)
+
+        elif type(var) in obj_type_list:
+            print(var.return_properties("name"))
+
+        else:
+            print(f"Type: {type(var)}\nVariable: {var}")
+
+
+def create(name, path = None):
+    folder_path = os.path.join(path, name)
+    if not os.path.exists(folder_path):
+        try:
+            os.makedirs(folder_path)
+            print(f"Directory created: {folder_path}")
+        except OSError as e:
+            raise OSError(f"Error creating directory: {e}")
+    else:
+        raise OSError(f"Directory '{folder_path}' already exists.")
+
+#def delete_f(f_path, name):
+#    source = os.path.join(f_path, name)
+#    if os.path.isdir(name):
+#        print(f"\nClearing \"{name}\" directory in \"{f_path}\"\n")
+#        for name_in in os.listdir(source):
+#            delete_f(os.path.join(source, name_in))
+#        print(f"\nDirectory \"{name}\" in \"{f_path}\" creared\nDeleting \"{source}\" in \"{f_path}\"\n")
+#        shutil.rmtree(source)
+#    else:
+#        print(f"\nDeleting {name} in {f_path}")
+#        os.remove(source)
+
+def delete_f(source):
+    if os.path.isdir(source):
+        print(f"\nClearing \"{source}\" directory\n")
+        for name in os.listdir(source):
+            delete_f(os.path.join(source, name))
+        print(f"\nDirectory \"{source}\" creared\nDeleting \"{source}\" directory\n")
+        shutil.rmtree(source)
+    else:
+        print(f"\nDeleting {source}")
+        os.remove(source)
+
+
+class C_Vart:                                                                   #sukuria vartotoja
+    def __init__(self, vardas, slaptazodis, teises, laikas):                    #reikia vardo, slaptazodzio, teisiu, laiko
+        self.__vardas = vardas
+        self.__slaptazodis = slaptazodis
+        self.__teises = teises
+        self.__time = laikas
+
+    def vardas(self):
+        return self.__vardas
+
+    def teises(self):
+        return self.__teises
+
+    def slaptazodis(self):
+        return self.__slaptazodis
+
+    def time(self, tm = None):
+        if tm:
+            self.__time = tm
+        else:
+            return self.__time
+
+class functions:
+    def __init__(self, var_list):
+        self.__var = var_list
+
+    def copy(self, id):
+        copy(self.__var['cur_dir'], self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+#        if self.perm_check(id):
+#            print("~copy")
+#            c_list = self.__select(id)
+#            for item in c_list:
+#                print(item)
+
+    def create(self, id):
+        if self.perm_check(id):
+            print("~create")
+
+    def rename(self, id):
+        if self.perm_check(id):
+            print("~rename")
+
+    def delete(self, id):
+        if self.perm_check(id):
+            print("~delete\n\nSelect items to delete:")
+            delet = select(self.__var['cur_dir'], self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+            print("You have selected:")
+            for item in delet:
+                print(f"- {item}")
+            inp = input("for deletion. This action cannot be undone. Do You wish to proceed?(y?)")
+            if inp == "y":
+                for item in delet:
+                    delete_f(item)
+                print("Items successfully deleted")
+            else:
+                print("Operation canceled")
+
+    def move(self, id):
+        if self.perm_check(id):
+            print("~move:")
+            move(self.__var['cur_dir'], self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+
+    def __select(self, id):
+        return select(self.__var['cur_dir'], self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+
+    def open(self, id):                     #Veikia
+        self.__var['cur_dir'] = fopen(self.__var['cur_dir'], self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+
+    def dir_list_full(self, id):
+        if self.perm_check(id):
+            print(f"{self.__var['cur_dir']}:")
+            print_dir_full(self.__var['cur_dir'], self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+
+    def __access(self, id, fname):
+        return access(self.__var['cur_dir'], fname, self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+
+    def perm_check(self, id):
+        return perm_check(self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+
+    def active_user_list(self, id):
+        if self.perm_check(id):
+            return active_user_list(self.__var['aktyvus'], id)
+
+    def comlist(self, id):
+        if self.perm_check(id):
+            return comlist(functions)
+
+    def back(self, id):
+        if self.perm_check(id):
+            self.__var['cur_dir'] = back(self.__var['cur_dir'])
+            self.dir_list(id)
+
+    def dir_list(self, id):
+            return dir_list(self.__var['cur_dir'], self.__var['aktyvus'], self.__var['vartotojai'][id[1]], id)
+
+
+def move(dir, akt, vart, id):
+    if perm_check(akt, vart, id):
+        print("~move:")
+        c_list = copy(dir, akt, vart, id, mov = True)
+        print("Copy ended\nRemoving old items")
+        for item in c_list:
+            delete_f(item)
+
+
+def copy(dir, akt, vart, id, mov = False):
+    if perm_check(akt, vart, id):
+        if mov == False:
+            print("~copy")
+        c_list = select(dir, akt, vart, id)
+        print("Now using \"open\" and \"back\" locate destination folder. Then type in \"ok\"")
+        command = input("open/back/ok:\n> ")
+        while(command != "ok"):
+            if command == "open":
+                dir = fopen(dir, akt, vart, id)
+            elif command == "back":
+                dir = back(dir)
+            elif command == "ok":
+                if mov == False:
+                    command = input("confirm copy location? (ok/no/exit)\n>")
+                else:
+                    command = input("confirm move location? (ok/no/exit)\n>")
+            else:
+                "Unknown command"
+            dir_list(dir, akt, vart, id)
+            command = input("open/back/ok:\n> ")
+        if command == "exit":
+            return 0;
+        print("Copying:")
+        for item in c_list:
+            s_list = []
+            if os.path.exists(os.path.join(dir, os.path.basename(item))):
+                command = "error"
+                while (command != "replace") and (command != "skip") and (command != "exit"):
+                    command = input(f"item {os.path.basename(item)} already exists in destination folder. replace or skip or exit?")
+                    if command == "replace":
+                        delete_f(os.path.join(dir, os.path.basename(item)))
+                    elif command == "skip" or command == "exit":
+                        pass
+                    else:
+                        print("Unknown command")
+                if command == "replace":
+                    command = "ok"
+            if command == "ok":
+                if os.path.isfile(item):
+                    shutil.copy(item, os.path.join(dir, os.path.basename(item)))
+                else:
+                    shutil.copytree(item, os.path.join(dir, os.path.basename(item)))
+                print(f"copy- {os.path.basename(item)}")
+                s_list.append(item)
+
+            if command == "exit":
+                return s_list
+        print("Copy success!")
+        return s_list
+
+
+def fopen(dir, akt, vart, id):                     #Veikia
+    if perm_check(akt, vart, id):
+        print("\nfolders:")
+        for name in os.listdir(dir):                      #atspauzdina aplanku sarasa
+            if os.path.isdir(os.path.join(dir, name)):
+                print(f" - {name}")
+        print("\nfiles:")
+        for name in os.listdir(dir):                      #atspauzdina failu sarasa
+            if os.path.isfile(os.path.join(dir, name)):
+                print(f" - {name}")
+        name = input("Enter name of what to open:\n- ")
+        faccess = access(dir, name, akt, vart, id)                                    #tikrina, ar turi teises pasirinkti objekta
+        if faccess == True:
+            if os.path.isdir(os.path.join(dir, name)):
+                dir = os.path.join(dir, name)
+                dir_list(dir, akt, vart, id)
+
+            if os.path.isfile(os.path.join(dir, name)):
+                print("File open")
+        elif faccess == "FnF":
+            print(f"\"{name}\" not found")
+        elif faccess == False:
+            print("\nACCESS DENIED")
+        else:
+            print("PROGRAM ERROR")
+        return dir
+
+
+def select(dir, akt, vart, id):
+    if perm_check(akt, vart, id):
+        __list = os.listdir(dir)
+        __selected = []
+        sel = True
+        while sel:
+            print("")
+            for item in __list:
+                if os.path.join(dir, item) in __selected:
+                    print(f"* {item}")
+                else:
+                    print(f"- {item}")
+            sel = input("(Press enter to end)\nEnter file/folder name to select/deselect:\n- ")
+            while ((sel not in __list) and sel):
+                sel = input("No such name found\n(Press enter to end)\nEnter file/folder name to select/deselect:\n- ")
+            if sel:
+                if os.path.join(dir, sel) in __selected:
+                    __selected.remove(os.path.join(dir, sel))
+                else:
+                    __selected.append(os.path.join(dir, sel))
+        return __selected
+    else:
+        print("ACCESS DENIED")
+        return None
+
+
+def access(fdir, fname, akt, vart, id):
+    try:
+        with open(os.path.join(fdir, ".f_data.txt"), 'r') as file_object:
+            if fname in os.listdir(fdir):
+                for line in file_object.readlines():
+                    name, access = line.split()
+                    if name == fname:
+                        if perm_check(akt, vart, id) == access:
+                            return True
+                        return False
+                return True
+            return "FnF"
+    except FileNotFoundError:
+#        print(f"Error: File \".f_data.txt\" not found.")
+        return True
+
+
+def perm_check(akt, vart, id):
+    if (id[1] in akt) and (id[0] == vart[2]):
+        return vart[1]
+    else:
+        return False
+
+
+def active_user_list(user_list, id):
+    for user in user_list:
+        print(f"- {user}")
+    return user_list
+
+def back(dir):
+    dir_t = dir[:-(len(os.path.basename(dir))+1)]
+    if dir_t == "":
+        print("Parent dir inaccecible")
+        return dir
+    else:
+        return dir_t
+
+def comlist(func):
+    comm = []
+    for com in dir(func):
+        if com[0] != "_":
+            comm.append(com)
+    return comm
+
+def dir_list(dir, akt, vart, id):
+    if perm_check(akt, vart, id):
+        print(f"\nItems in {dir}:")
+        for item in os.listdir(dir):
+            print(f"- {item}")
+        return os.listdir("main folder")
+    else:
+        return ""
+
+
+
+
+
+@singleton
+class server_def(functions):
+    def __init__(self):
+        self.__var = {
+            'vartotojai': {},
+            'aktyvus': [],
+            'login_time': time.time(),
+            'login_count': 0,
+            'cur_dir': os.getcwd()
+            }
+        try:
+            with open("Vartotojai1.txt", 'r') as file_object:
+                for vartotojas in file_object.readlines():
+                    vardas, slaptazodis, teises = vartotojas.split()
+                    if vardas in self.__var['vartotojai']:
+                        raise OSError(f"Pasikartojantis vartotojas duomenyse \"Vartotojai1.txt\"")
+                    self.__var['vartotojai'][vardas] = [slaptazodis, teises, time.time()]
+        except FileNotFoundError:
+            pass
+            print(f"Error: File \"Vartotojai1.txt\" not found.")
+
+        super().__init__(self.__var)
+
+    def login(self, name, psw):
+        if time.time() > self.__var['login_time']:     #tikrina, ar serveris nebuvo blokuotas
+            if time.time() - self.__var['login_time'] > 30:        #tikrina, kada buvo paskutini karta jungtasi. Jei <10, anuliuoja login_count
+                self.__var['login_count'] = 0
+            if self.__var['login_count'] < 5:      #tikrina, prisijunginu kieki per paskutinies kazkiek sekundziu
+                self.__var['login_count'] += 1
+                if name in self.__var['vartotojai'] and self.__var['vartotojai'][name][0] == psw:       #ar yra toks vartotojas       #ar teisingas slaptazodis
+                    if name in self.__var['aktyvus']:      #ar jis nera jau prisijunges
+                        return "Šis vartotojas jau prisijungęs"
+                    else:
+                        self.__var['vartotojai'][name][2] = time.time()
+                        self.__var['aktyvus'].append(name)
+                        return [self.__var['vartotojai'][name][2], name]
+                else:
+                    return False
+            else:
+                self.__var['login_time'] = time.time() + 30
+                self.__var['login_count'] = 0
+                print(f"Too many attempts. Login locked for {round(self.__var['login_time'] - time.time())} seconds")
+                return False
+        else:
+            print(f"Too many attempts. Login locked for {round(self.__var['login_time'] - time.time())} seconds")
+            return False
+
+
+
+
+
+class client:
+    def __init__(self, server):
+        self.__id = False
+        while(not (type(self.__id) == type([]))):
+            self.__id = server.login(input("Vardas:\n- "), input("Slaptazodis:\n- "))
+#            self.__id = server.login("m", "1")
+            if self.__id == False:
+                print("Neteisingas vartotojo vardas arba slaptažodis")
+            elif type(self.__id) == str:
+                print(self.__id)
+        print("Prisijungta\n-----------------------------------\n\n")
+        self.__command_list = {}
+        for item in server.comlist(self.__id):
+            methd = getattr(server, item)
+            if callable(methd):
+                self.__command_list[str(item)] = methd
+
+    def command(self, com):
+        if com in self.__command_list:
+            temp = self.__command_list[com](self.__id)
+            if com == "comlist":
+                print_1("- exit", temp)
+        else:
+            print("Command not found")
+
+
+def kw_args(**kwargs):
+    return kwargs
+
+
+instance1 = server_def()
+
+instance1.login("Sandra", "4321")
+instance1.login("Pitas", "626827")
+
+client1 = client(instance1)
+
+inp = input("\nTo quit press \"enter\"\nFor commands list enter \"comlist\"\n\n>")
+
+while(inp != "exit"):
+    if inp:
+
+        client1.command(inp)
+    inp = input("\n>")
+
+
+
+
+#test test test
