@@ -1,0 +1,71 @@
+import os
+import shutil
+
+
+def delete1(source):
+    for name in os.listdir(source):
+        if os.path.isdir(os.path.join(source, name)):
+#            print(f"\nClearing \"{name}\" directory\n")
+            delete1(os.path.join(source, name))
+        else:
+#            print(f"Deleting \"{name}\" file")
+            os.remove(os.path.join(source, name))
+#    print(f"\nDirectory \"{source}\" creared\nDeleting \"{source}\" directory\n")
+    shutil.rmtree(source)
+
+def create1(name, path = None):
+    if path != None:
+        folder_path = os.path.join(path, name)
+    else:
+        folder_path = name
+    if not os.path.exists(folder_path):
+        try:
+            os.makedirs(folder_path)
+#            print(f"Directory created: {folder_path}")
+        except OSError as e:
+            raise OSError(f"Error creating directory: {e}")
+    else:
+        raise OSError(f"Directory '{folder_path}' already exists.")
+
+if os.path.exists("drive/MyDrive/Colab Notebooks/Kursinis/Class to import"):
+    if os.path.exists("Class_to_import"):
+        delete1("Class_to_import")
+    shutil.copytree("drive/MyDrive/Colab Notebooks/Kursinis/Class to import", "Class_to_import")
+
+if os.path.exists("main folder"):
+    delete1("main folder")
+
+create1("main folder")
+create1("pirmas", "main folder")
+create1("antras", "main folder")
+create1("trečias", "main folder")
+create1("ketvirtas", "main folder")
+create1("penktas", "main folder")
+create1("pirmas", "main folder/pirmas")
+create1("antras", "main folder/pirmas")
+create1("trečias", "main folder/pirmas")
+create1("pirmas", "main folder/antras")
+create1("antras", "main folder/antras")
+
+data = ['Paulius 1234 user\n', 'Sandra 4321 user\n', 'Pitas 626827 admin']
+with open("Vartotojai.txt", 'w') as file_object:
+    with open("Vartotojai1.txt", 'w') as file_object1:
+        for dat in data:
+            file_object.write(dat)
+            file_object1.write(dat)
+        file_object1.write('\nm 1 admin')
+
+with open(".f_data.txt", 'w') as file_object:
+    file_object.write(".config admin\nClass_to_import admin\ndrive admin\n.f_data admin")
+
+with open("main folder/.f_data.txt", 'w') as file_object:
+    file_object.write("antras admin\n.f_data admin")
+
+with open(".f_data.txt", 'w') as file_object:
+    file_object.write(".config admin\nClass_to_import admin\ndrive admin\n.f_data admin")
+
+with open("main folder/.f_data.txt", 'w') as file_object:
+    file_object.write("antras admin\n.f_data admin")
+
+with open(".def_folder.txt", 'w') as file_object:
+    file_object.write("Paulius ")
